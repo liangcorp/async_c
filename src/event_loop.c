@@ -82,6 +82,19 @@ void event_loop_init(event_loop_t *el)
 	el->current_task = NULL;
 }
 
+void event_loop_run(event_loop_t *el)
+{
+	pthread_attr_t attr;
+	assert(el->thread == NULL);
+
+	el->thread = (pthread_t *)calloc(1, sizeof(pthread_t));
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	pthread_create(el->thread, &attr, event_loop_thread, (void *)el);
+}
+
 static void event_loop_add_task_in_task_array(event_loop_t *el,
 					      task_t *new_task)
 {
@@ -131,19 +144,6 @@ task_t *task_create_new_job(event_loop_t *el, event_cbk cbk, void *arg)
 	event_loop_schedule_task(el, task);
 
 	return task;
-}
-
-void event_loop_run(event_loop_t *el)
-{
-	pthread_attr_t attr;
-	assert(el->thread == NULL);
-
-	el->thread = (pthread_t *)calloc(1, sizeof(pthread_t));
-
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-	pthread_create(el->thread, &attr, event_loop_thread, (void *)el);
 }
 
 static bool task_is_present_in_task_array(task_t *task)
